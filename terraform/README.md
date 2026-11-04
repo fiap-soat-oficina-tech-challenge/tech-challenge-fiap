@@ -12,7 +12,7 @@ Até a Fase 3, o banco ficava no repositório `tc3-infra-db`. Ele veio para cá 
 
 ## Dependências e ordem
 
-A VPC, o cluster e o security group dos nós vêm de [`tc3-infra-k8s`](https://github.com/tiagostorch/tc3-infra-k8s), lidos pelo state remoto; a license key do New Relic vem do SSM, publicada por ele. O agente do banco é criado no cluster, então o Terraform fala também com o Kubernetes (provider `kubernetes`, autenticado com `aws eks get-token`). Por isso:
+A VPC, o cluster e o security group dos nós vêm de [`tc3-infra-k8s`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-infra-k8s), lidos pelo state remoto; a license key do New Relic vem do SSM, publicada por ele. O agente do banco é criado no cluster, então o Terraform fala também com o Kubernetes (provider `kubernetes`, autenticado com `aws eks get-token`). Por isso:
 
 - **apply:** depois de `tc3-infra-k8s`, com o cluster no ar;
 - **destroy:** antes de `tc3-infra-k8s` e com o cluster ainda no ar, porque a AWS não apaga a role dos nós com a política deste serviço anexada e o agente do banco precisa ser removido do cluster.

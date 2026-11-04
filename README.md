@@ -49,11 +49,11 @@ Na Fase 4 a oficina foi dividida em **três microsserviços independentes**, cad
 
 | Serviço | Repositório | Responsabilidade | Banco |
 |---|---|---|---|
-| **OS Service** (este) | [`tech-challenge-fiap`](https://github.com/LucasValada/tech-challenge-fiap) | Abertura, status e histórico da OS; clientes, veículos, catálogo e estoque; **orquestra a Saga** | PostgreSQL (RDS) |
+| **OS Service** (este) | [`tech-challenge-fiap`](https://github.com/fiap-soat-oficina-tech-challenge/tech-challenge-fiap) | Abertura, status e histórico da OS; clientes, veículos, catálogo e estoque; **orquestra a Saga** | PostgreSQL (RDS) |
 | **Billing Service** | [`oficina-billing-service`](https://github.com/fiap-soat-oficina-tech-challenge/oficina-billing-service) | Orçamento, aprovação (cliente ou sistema externo), pagamento no Mercado Pago (QR Code dinâmico) e estorno | PostgreSQL (RDS próprio) |
 | **Execution Service** | [`oficina-execution-service`](https://github.com/fiap-soat-oficina-tech-challenge/oficina-execution-service) | Fila de diagnóstico e reparo do mecânico | DynamoDB |
 
-A plataforma da Fase 3 continua: VPC e EKS ([`tc3-infra-k8s`](https://github.com/tiagostorch/tc3-infra-k8s)) e o API Gateway com as Lambdas de autenticação e de e-mail ([`tc3-auth-lambda`](https://github.com/tiagostorch/tc3-auth-lambda)). Cada serviço traz a própria infraestrutura na pasta `terraform/` do seu repositório: a do OS tem a fila de respostas da Saga e o RDS PostgreSQL do OS (ver [`terraform/README.md`](terraform/README.md)). Os três serviços rodam no mesmo cluster, cada um no seu namespace, atrás do mesmo ALB.
+A plataforma da Fase 3 continua: VPC e EKS ([`tc3-infra-k8s`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-infra-k8s)) e o API Gateway com as Lambdas de autenticação e de e-mail ([`tc3-auth-lambda`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-auth-lambda)). Cada serviço traz a própria infraestrutura na pasta `terraform/` do seu repositório: a do OS tem a fila de respostas da Saga e o RDS PostgreSQL do OS (ver [`terraform/README.md`](terraform/README.md)). Os três serviços rodam no mesmo cluster, cada um no seu namespace, atrás do mesmo ALB.
 
 ### Diagrama geral
 
@@ -231,7 +231,7 @@ O `correlationId` nasce na abertura da OS: é o header `x-correlation-id` da req
 
 ### Rota interna da Lambda de autenticação
 
-`POST /internal/clientes/busca` (CPF no corpo, header `x-internal-token`) devolve `{ id, nome, status }`. Com ela, a Lambda de autenticação por CPF deixa de ler o banco do OS. O token é gerado pelo [`terraform/ssm.tf`](terraform/ssm.tf) e guardado só no SSM. A troca na Lambda ([`tc3-auth-lambda`](https://github.com/tiagostorch/tc3-auth-lambda)) é feita na etapa de integração na AWS.
+`POST /internal/clientes/busca` (CPF no corpo, header `x-internal-token`) devolve `{ id, nome, status }`. Com ela, a Lambda de autenticação por CPF deixa de ler o banco do OS. O token é gerado pelo [`terraform/ssm.tf`](terraform/ssm.tf) e guardado só no SSM. A troca na Lambda ([`tc3-auth-lambda`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-auth-lambda)) é feita na etapa de integração na AWS.
 
 ### Teste de integração dos três serviços
 
@@ -296,10 +296,10 @@ A Fase 3 exigiu a segregação da solução em **quatro repositórios git indepe
 
 | # | Repositório | Papel | Stack |
 |---|---|---|---|
-| 1 | [`tc3-auth-lambda`](https://github.com/tiagostorch/tc3-auth-lambda) | **Duas** Functions Serverless no mesmo repo, atrás de um único **API Gateway**: **autenticação por CPF** (`POST /auth`) e **notificações por e-mail** (`POST /mail`) | AWS Lambda (Node), API Gateway HTTP v2, `pg`, `nodemailer` |
-| 2 | [`tc3-infra-k8s`](https://github.com/tiagostorch/tc3-infra-k8s) | Terraform do **cluster EKS** (VPC, EKS, node group, ECR, ALB Controller, OIDC, budget) + observabilidade New Relic (agente, dashboard, alertas) | Terraform, módulos AWS |
-| 3 | [`tc3-infra-db`](https://github.com/tiagostorch/tc3-infra-db) | Terraform do **RDS PostgreSQL** gerenciado (+ publicação dos segredos no SSM). Na Fase 4 esse Terraform passou para a pasta `terraform/` deste repositório, e o `tc3-infra-db` foi desativado | Terraform, RDS |
-| 4 | [**`tech-challenge-fiap`**](https://github.com/LucasValada/tech-challenge-fiap) **(este repo)** | **Aplicação principal** NestJS rodando no EKS | NestJS 11, Prisma 7, PostgreSQL |
+| 1 | [`tc3-auth-lambda`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-auth-lambda) | **Duas** Functions Serverless no mesmo repo, atrás de um único **API Gateway**: **autenticação por CPF** (`POST /auth`) e **notificações por e-mail** (`POST /mail`) | AWS Lambda (Node), API Gateway HTTP v2, `pg`, `nodemailer` |
+| 2 | [`tc3-infra-k8s`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-infra-k8s) | Terraform do **cluster EKS** (VPC, EKS, node group, ECR, ALB Controller, OIDC, budget) + observabilidade New Relic (agente, dashboard, alertas) | Terraform, módulos AWS |
+| 3 | [`tc3-infra-db`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-infra-db) | Terraform do **RDS PostgreSQL** gerenciado (+ publicação dos segredos no SSM). Na Fase 4 esse Terraform passou para a pasta `terraform/` deste repositório, e o `tc3-infra-db` foi desativado | Terraform, RDS |
+| 4 | [**`tech-challenge-fiap`**](https://github.com/fiap-soat-oficina-tech-challenge/tech-challenge-fiap) **(este repo)** | **Aplicação principal** NestJS rodando no EKS | NestJS 11, Prisma 7, PostgreSQL |
 
 Os repositórios se integram por **rede privada (VPC)**, **SSM Parameter Store** (segredos compartilhados, incl. o `JWT_SECRET` que a Lambda e a app usam) e **`terraform_remote_state`**. Por que AWS e como cada peça se encaixa: ver **[RFC-002 — Escolha da nuvem](docs/rfc/RFC-002-escolha-da-nuvem.md)**.
 
@@ -589,7 +589,7 @@ O ambiente da AWS só existe nas janelas de integração e demonstração. Sem o
 - **Desempenho em consultas analíticas:** o relatório de tempo médio de execução usa agregações que o PostgreSQL lida com eficiência.
 - **Ecossistema maduro:** integração consolidada com Prisma 7 (via driver adapter `@prisma/adapter-pg`) e documentação abrangente.
 
-Na Fase 3 o banco passou de Postgres-em-cluster para **RDS PostgreSQL gerenciado** (subnet privada, TLS obrigatório, backups e métricas geridos pela AWS), provisionado no repositório [`tc3-infra-db`](https://github.com/tiagostorch/tc3-infra-db). A modelagem também foi **melhorada** (campo `status` em `Cliente`, snapshots imutáveis nas linhas da OS, numeração sequencial anual e políticas de exclusão explícitas).
+Na Fase 3 o banco passou de Postgres-em-cluster para **RDS PostgreSQL gerenciado** (subnet privada, TLS obrigatório, backups e métricas geridos pela AWS), provisionado no repositório [`tc3-infra-db`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-infra-db). A modelagem também foi **melhorada** (campo `status` em `Cliente`, snapshots imutáveis nas linhas da OS, numeração sequencial anual e políticas de exclusão explícitas).
 
 Na Fase 4 este PostgreSQL passou a ser **só do OS Service**, e o Terraform dele veio para a pasta [`terraform/`](terraform/README.md) deste repositório (RDS `oficina-os-db`). O Billing tem o próprio PostgreSQL e o Execution usa DynamoDB; nenhum serviço lê o banco de outro (ver [Fase 4](#fase-4-microsserviços-e-saga)).
 
@@ -719,7 +719,7 @@ Forma recomendada para rodar a aplicação localmente (o deploy na nuvem é auto
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/LucasValada/tech-challenge-fiap.git
+git clone https://github.com/fiap-soat-oficina-tech-challenge/tech-challenge-fiap.git
 cd tech-challenge-fiap
 
 # 2. Configurar variáveis de ambiente
@@ -793,7 +793,7 @@ As notificações por e-mail são enviadas por uma **Lambda serverless** — ver
 
 ## Notificações por e-mail (Lambda)
 
-O envio de e-mail (finalização e entrega; na Fase 4 o orçamento e o QR Code de pagamento são enviados pelo Billing) **não é feito pelo app**: ele faz um `POST` autenticado para a **Lambda de notificações** — que fica no repositório [`tc3-auth-lambda`](https://github.com/tiagostorch/tc3-auth-lambda), **o mesmo da autenticação por CPF** (as duas Lambdas convivem lá, atrás do mesmo API Gateway) —, na rota `/mail`, e ela cuida do SMTP. O envio é **best-effort** — uma falha é registrada no log e **não bloqueia** a transição de status da OS (com timeout de 15s).
+O envio de e-mail (finalização e entrega; na Fase 4 o orçamento e o QR Code de pagamento são enviados pelo Billing) **não é feito pelo app**: ele faz um `POST` autenticado para a **Lambda de notificações** — que fica no repositório [`tc3-auth-lambda`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-auth-lambda), **o mesmo da autenticação por CPF** (as duas Lambdas convivem lá, atrás do mesmo API Gateway) —, na rota `/mail`, e ela cuida do SMTP. O envio é **best-effort** — uma falha é registrada no log e **não bloqueia** a transição de status da OS (com timeout de 15s).
 
 Duas variáveis controlam a integração:
 
@@ -831,7 +831,7 @@ O token administrativo carrega `{ sub, email }` e é resolvido como `tipo: "admi
 
 ### 2. Clientes — CPF (função serverless)
 
-O cliente da oficina autentica **pelo CPF**, através de uma **função serverless (AWS Lambda)** exposta no API Gateway. Ela vive no repositório [`tc3-auth-lambda`](https://github.com/tiagostorch/tc3-auth-lambda) — **o mesmo repositório que também hospeda a Lambda de notificações por e-mail** (`/mail`); são duas funções no mesmo projeto, atrás do mesmo API Gateway. O fluxo:
+O cliente da oficina autentica **pelo CPF**, através de uma **função serverless (AWS Lambda)** exposta no API Gateway. Ela vive no repositório [`tc3-auth-lambda`](https://github.com/fiap-soat-oficina-tech-challenge/tc3-auth-lambda) — **o mesmo repositório que também hospeda a Lambda de notificações por e-mail** (`/mail`); são duas funções no mesmo projeto, atrás do mesmo API Gateway. O fluxo:
 
 1. Cliente envia o CPF → `POST /auth` (API Gateway → Lambda)
 2. A Lambda valida os dígitos do CPF, consulta o cliente e verifica se está **ATIVO** (na Fase 4, a consulta passa a ser pela rota interna `POST /internal/clientes/busca`, e a Lambda deixa de ler o banco do OS — ver [Rota interna](#rota-interna-da-lambda-de-autenticação))
