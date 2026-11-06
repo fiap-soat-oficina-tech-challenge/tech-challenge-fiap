@@ -43,6 +43,12 @@ jobs:
       - name: Unit tests with coverage
         run: npm run test:cov
 
+      # Os e2e sobem um PostgreSQL de verdade (Testcontainers, com o Docker do
+      # runner) e são os testes dos repositórios Prisma (src/infra). A cobertura
+      # sai em coverage-e2e/, separada da dos unitários.
+      - name: E2E tests with coverage
+        run: npm run test:e2e:cov
+
       - name: Compile TypeScript
         run: npm run build
 
