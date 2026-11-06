@@ -23,6 +23,8 @@ export default async function globalSetup(): Promise<void> {
   process.env.MAIL_LAMBDA_TOKEN ??= 'e2e-dummy-token';
   // Token das rotas /internal (Lambda de autenticação).
   process.env.INTERNAL_API_TOKEN ??= 'e2e-token-interno';
+  // Segredo do JWT só dos testes; no CI não há .env.
+  process.env.JWT_SECRET ??= 'e2e-segredo-jwt';
 
   execSync('npx prisma migrate deploy', {
     env: { ...process.env, DATABASE_URL: url },
