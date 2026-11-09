@@ -145,6 +145,8 @@ graph TB
 
 Nenhum serviço acessa o banco de outro. O que um precisa saber do outro chega numa mensagem, como cópia, ou por uma chamada REST.
 
+Cada serviço recebe apenas as credenciais do próprio banco. As permissões de acesso aos recursos da AWS (filas SQS e DynamoDB) são concedidas pela role dos nós do EKS, compartilhada pelos três serviços.
+
 ### Por que esta divisão
 
 A divisão segue a sugerida pelo enunciado e separa as áreas que mudam por motivos diferentes:
@@ -996,7 +998,7 @@ curl -X POST https://<api-gateway>/billing/orcamentos/<orcamentoId>/aprovar \
 
 ## Documentação da API
 
-O Swagger UI serve como collection interativa completa das APIs, com todos os DTOs de entrada e resposta, formatos (`uuid`, `email`, `date`), enums, exemplos e códigos HTTP possíveis.
+O Swagger UI documenta todas as rotas da API, com os DTOs de entrada, os códigos HTTP de resposta e exemplos, e permite executá-las direto do navegador.
 
 - **Swagger UI (interativo):** `http://localhost:3000/api` — permite executar cada endpoint direto do browser após autenticar via `Authorize` com o `accessToken` do login
 - **OpenAPI JSON (para importar em Postman/Insomnia):** `http://localhost:3000/api-json`
