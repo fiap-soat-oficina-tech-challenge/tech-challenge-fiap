@@ -145,6 +145,8 @@ graph TB
 
 Nenhum serviço acessa o banco de outro. O que um precisa saber do outro chega numa mensagem, como cópia, ou por uma chamada REST.
 
+As credenciais de banco são separadas: cada serviço recebe só a sua (a `DATABASE_URL` do próprio RDS, ou o nome da própria tabela no DynamoDB). Já as permissões da AWS, de filas e DynamoDB, ficam na role dos nós do EKS, compartilhada pelos três serviços. Então o isolamento entre eles vem do código e da configuração de cada um, e não do IAM. Uma role por serviço (IRSA ou EKS Pod Identity) fecharia esse ponto e fica como evolução.
+
 ### Por que esta divisão
 
 A divisão segue a sugerida pelo enunciado e separa as áreas que mudam por motivos diferentes:
@@ -996,7 +998,7 @@ curl -X POST https://<api-gateway>/billing/orcamentos/<orcamentoId>/aprovar \
 
 ## Documentação da API
 
-O Swagger UI serve como collection interativa completa das APIs, com todos os DTOs de entrada e resposta, formatos (`uuid`, `email`, `date`), enums, exemplos e códigos HTTP possíveis.
+O Swagger UI documenta todas as rotas da API e permite executá-las direto do navegador. Os corpos de entrada vêm com os DTOs de validação (formatos como `uuid`, `email` e `date`, enums e exemplos), e cada rota lista os códigos HTTP de resposta. O formato do corpo da resposta está documentado nas rotas de usuários, na consulta pública, no relatório de tempo médio e na rota interna; nas demais, o Swagger mostra o código e a descrição de cada resposta.
 
 - **Swagger UI (interativo):** `http://localhost:3000/api` — permite executar cada endpoint direto do browser após autenticar via `Authorize` com o `accessToken` do login
 - **OpenAPI JSON (para importar em Postman/Insomnia):** `http://localhost:3000/api-json`
