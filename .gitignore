@@ -17,6 +17,8 @@ lerna-debug.log*
 
 # Tests
 /coverage
+/coverage-e2e
+/coverage-total
 /.nyc_output
 
 # IDEs and editors
@@ -64,9 +66,14 @@ specs/
 .agents/
 
 # Terraform
-infra/.terraform/
+.terraform/
+*.tfstate
+*.tfstate.*
 infra/*.tfstate
 infra/*.tfstate.*
 infra/oficina-cluster-config
 infra/crash.log
 infra/crash.*.log
+
+# Relatório do BDD (npm run test:bdd)
+test/bdd/relatorio/

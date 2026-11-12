@@ -4,6 +4,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { PrismaModule } from './modules/prisma/prisma.module';
+import { AwsModule } from './common/aws/aws.module';
 import { HealthModule } from './modules/health/health.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth';
@@ -13,6 +14,7 @@ import { ClienteModule } from './modules/cliente/cliente.module';
 import { OrdemServicoModule } from './modules/ordem-servico';
 import { ServicoModule } from './modules/servico/servico.module';
 import {
+  contextoDoFluxo,
   metadadosDeTrace,
   tagsDeObservabilidade,
 } from './common/observability';
@@ -67,7 +69,10 @@ import { TelemetriaShutdown } from './common/observability/telemetria-shutdown';
         // `entity.name` do APM. É o que liga log e trace distribuído nos dois
         // sentidos. Com o agente desligado devolve objeto vazio, e o log sai
         // igual, sem os campos de correlação.
-        mixin: () => metadadosDeTrace(),
+        //
+        // No consumo de mensagens da Saga (fora de requisição HTTP) acrescenta
+        // também o correlationId e a OS do fluxo, vindos do envelope.
+        mixin: () => ({ ...metadadosDeTrace(), ...contextoDoFluxo() }),
 
         genReqId: (req: IncomingMessage, res: ServerResponse) => {
           const header =
@@ -119,6 +124,7 @@ import { TelemetriaShutdown } from './common/observability/telemetria-shutdown';
         ],
       },
     }),
+    AwsModule,
     HealthModule,
     UserModule,
     PrismaModule,

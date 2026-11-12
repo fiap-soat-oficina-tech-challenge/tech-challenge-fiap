@@ -4,7 +4,6 @@ import { OrdemServicoController } from './ordem-servico.controller';
 import { GetAllOrdensServicoUseCase } from '../../application/use-case/get-all-ordens-servico.use-case';
 import { GetMinhasOrdensServicoUseCase } from '../../application/use-case/get-minhas-ordens-servico.use-case';
 import { GetMinhaOrdemServicoUseCase } from '../../application/use-case/get-minha-ordem-servico.use-case';
-import { DecidirOrcamentoClienteUseCase } from '../../application/use-case/decidir-orcamento-cliente.use-case';
 import { GetOrdemServicoByIdUseCase } from '../../application/use-case/get-ordem-servico-by-id.use-case';
 import { CreateOrdemServicoUseCase } from '../../application/use-case/create-ordem-servico.use-case';
 import { UpdateOrdemServicoUseCase } from '../../application/use-case/update-ordem-servico.use-case';
@@ -15,7 +14,7 @@ import { RemoverServicoOSUseCase } from '../../application/use-case/remover-serv
 import { AdicionarItemEstoqueOSUseCase } from '../../application/use-case/adicionar-item-estoque-os.use-case';
 import { AtualizarQuantidadeItemEstoqueUseCase } from '../../application/use-case/atualizar-quantidade-item-estoque.use-case';
 import { RemoverItemEstoqueOSUseCase } from '../../application/use-case/remover-item-estoque-os.use-case';
-import { EnviarOrcamentoUseCase } from '../../application/use-case/enviar-orcamento.use-case';
+import { CancelarOrdemServicoUseCase } from '../../application/use-case/cancelar-ordem-servico.use-case';
 import { TransicionarStatusUseCase } from '../../application/use-case/transicionar-status.use-case';
 import { AuthenticatedUser } from '../../../auth/domain/types';
 
@@ -24,7 +23,6 @@ const mock = () => ({ execute: jest.fn() });
 const getAll = mock();
 const getMinhas = mock();
 const getMinha = mock();
-const decidirOrcamento = mock();
 const getById = mock();
 const create = mock();
 const update = mock();
@@ -35,7 +33,7 @@ const removerServico = mock();
 const adicionarItem = mock();
 const atualizarQtdItem = mock();
 const removerItem = mock();
-const enviarOrcamento = mock();
+const cancelar = mock();
 const transicionarStatus = mock();
 
 const fakeRequest = (
@@ -55,10 +53,6 @@ describe('OrdemServicoController', () => {
         { provide: GetAllOrdensServicoUseCase, useValue: getAll },
         { provide: GetMinhasOrdensServicoUseCase, useValue: getMinhas },
         { provide: GetMinhaOrdemServicoUseCase, useValue: getMinha },
-        {
-          provide: DecidirOrcamentoClienteUseCase,
-          useValue: decidirOrcamento,
-        },
         { provide: GetOrdemServicoByIdUseCase, useValue: getById },
         { provide: CreateOrdemServicoUseCase, useValue: create },
         { provide: UpdateOrdemServicoUseCase, useValue: update },
@@ -75,7 +69,7 @@ describe('OrdemServicoController', () => {
           useValue: atualizarQtdItem,
         },
         { provide: RemoverItemEstoqueOSUseCase, useValue: removerItem },
-        { provide: EnviarOrcamentoUseCase, useValue: enviarOrcamento },
+        { provide: CancelarOrdemServicoUseCase, useValue: cancelar },
         { provide: TransicionarStatusUseCase, useValue: transicionarStatus },
       ],
     }).compile();
@@ -105,44 +99,13 @@ describe('OrdemServicoController', () => {
     const detalhe = { id: 'os-1', codigo: 'OS-2026-000001' };
     getMinha.execute.mockResolvedValue(detalhe);
 
-    const result = await controller.findMinhaById(fakeRequest('cliente-1'), 'os-1');
+    const result = await controller.findMinhaById(
+      fakeRequest('cliente-1'),
+      'os-1',
+    );
 
     expect(result).toBe(detalhe);
     expect(getMinha.execute).toHaveBeenCalledWith('cliente-1', 'os-1');
-  });
-
-  it('POST /ordens-servico/minhas/:id/aprovar → decidir(aprovado=true) com o clienteId do token', async () => {
-    const os = { id: 'os-1', status: 'EM_EXECUCAO' };
-    decidirOrcamento.execute.mockResolvedValue(os);
-
-    const result = await controller.aprovarMinhaOrdem(
-      fakeRequest('cliente-1'),
-      'os-1',
-    );
-
-    expect(result).toBe(os);
-    expect(decidirOrcamento.execute).toHaveBeenCalledWith(
-      'cliente-1',
-      'os-1',
-      true,
-    );
-  });
-
-  it('POST /ordens-servico/minhas/:id/rejeitar → decidir(aprovado=false) com o clienteId do token', async () => {
-    const os = { id: 'os-1', status: 'EM_DIAGNOSTICO' };
-    decidirOrcamento.execute.mockResolvedValue(os);
-
-    const result = await controller.rejeitarMinhaOrdem(
-      fakeRequest('cliente-1'),
-      'os-1',
-    );
-
-    expect(result).toBe(os);
-    expect(decidirOrcamento.execute).toHaveBeenCalledWith(
-      'cliente-1',
-      'os-1',
-      false,
-    );
   });
 
   it('GET /ordens-servico/:id → GetOrdemServicoByIdUseCase', async () => {
@@ -161,7 +124,17 @@ describe('OrdemServicoController', () => {
     const result = await controller.create(fakeRequest('usuario-x'), dto);
 
     expect(result).toBe(ordemCriada);
-    expect(create.execute).toHaveBeenCalledWith('usuario-x', dto);
+    expect(create.execute).toHaveBeenCalledWith('usuario-x', dto, undefined);
+  });
+
+  it('POST /ordens-servico → usa o id da requisição como correlationId da OS', async () => {
+    const dto = { cpfCnpj: '529.982.247-25', placa: 'ABC1D23' };
+    create.execute.mockResolvedValue({ id: 'ordem-1' });
+    const req = Object.assign(fakeRequest('usuario-x'), { id: 'fluxo-1' });
+
+    await controller.create(req, dto);
+
+    expect(create.execute).toHaveBeenCalledWith('usuario-x', dto, 'fluxo-1');
   });
 
   it('PUT /ordens-servico/:id → update', async () => {
@@ -229,17 +202,20 @@ describe('OrdemServicoController', () => {
     expect(removerItem.execute).toHaveBeenCalledWith('ordem-1', 'linha-2');
   });
 
-  it('POST /:id/enviar-orcamento → enviarOrcamento com user.id', async () => {
-    enviarOrcamento.execute.mockResolvedValue({ id: 'ordem-1' });
-    await controller.enviarOrcamento(fakeRequest('usuario-z'), 'ordem-1');
-    expect(enviarOrcamento.execute).toHaveBeenCalledWith(
+  it('POST /:id/cancelar → cancelar com user.id e o motivo', async () => {
+    cancelar.execute.mockResolvedValue({ id: 'ordem-1', status: 'CANCELADA' });
+    await controller.cancelar(fakeRequest('usuario-z'), 'ordem-1', {
+      motivo: 'Cliente desistiu',
+    });
+    expect(cancelar.execute).toHaveBeenCalledWith(
       'ordem-1',
       'usuario-z',
+      'Cliente desistiu',
     );
   });
 
   it('POST /:id/transicao-status → transicionarStatus com user.id', async () => {
-    const dto = { status: 'EM_DIAGNOSTICO' as const };
+    const dto = { status: 'ENTREGUE' as const };
     transicionarStatus.execute.mockResolvedValue({ id: 'ordem-1' });
     await controller.transicionarStatus(
       fakeRequest('usuario-y'),

@@ -1,6 +1,6 @@
 export { JwtAuthGuard } from './jwt-auth.guard';
 export {
-  WebhookTokenGuard,
-  WEBHOOK_TOKEN_HEADER,
-  WEBHOOK_TOKEN_ENV,
-} from './webhook-token.guard';
+  InternalTokenGuard,
+  INTERNAL_TOKEN_ENV,
+  INTERNAL_TOKEN_HEADER,
+} from './internal-token.guard';
