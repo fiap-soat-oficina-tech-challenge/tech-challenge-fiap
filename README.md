@@ -309,9 +309,7 @@ O ambiente roda numa **conta AWS própria do grupo** (não no AWS Academy), em `
 
 ### Vídeo de demonstração
 
-**Fase 4:** _link a incluir_ — fluxo completo de uma OS pelos três serviços, a Saga com as compensações, o deploy automatizado de um serviço com os testes e o rastreamento do fluxo no New Relic.
-
-Vídeo da Fase 3, como referência: [https://youtu.be/P01Bz7Hop7w](https://youtu.be/P01Bz7Hop7w).
+**Fase 4:** [https://youtu.be/sIdEA9uwsFo](https://youtu.be/sIdEA9uwsFo) — fluxo completo de uma OS pelos três serviços, a Saga com as compensações, o deploy automatizado de um serviço com os testes e o rastreamento do fluxo no New Relic.
 
 ## OS Service
 
