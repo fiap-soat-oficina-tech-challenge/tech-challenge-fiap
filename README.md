@@ -311,8 +311,6 @@ O ambiente roda numa **conta AWS própria do grupo** (não no AWS Academy), em `
 
 **Fase 4:** [https://youtu.be/sIdEA9uwsFo](https://youtu.be/sIdEA9uwsFo) — fluxo completo de uma OS pelos três serviços, a Saga com as compensações, o deploy automatizado de um serviço com os testes e o rastreamento do fluxo no New Relic.
 
-Vídeo da Fase 3, como referência: [https://youtu.be/P01Bz7Hop7w](https://youtu.be/P01Bz7Hop7w).
-
 ## OS Service
 
 O OS Service é dono da ordem de serviço e dos cadastros que ela usa (clientes, veículos, catálogo de serviços e estoque), autentica os funcionários e orquestra a Saga. A API cobre a gestão desses cadastros e das ordens de serviço, com **autenticação dupla** (funcionário por e-mail e senha; cliente por **CPF, via Lambda**), acompanhamento público da OS e observabilidade (health, logs JSON com correlação, APM).
